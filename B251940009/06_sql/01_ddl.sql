@@ -70,3 +70,35 @@ CREATE TABLE khudaldan_avagch (
     utas VARCHAR(20),
     CONSTRAINT chk_kvot_uldegdel CHECK (uldegdel_kvot_kg <= kvot_kg)
 );
+
+-- 8. НООЛУУРЫН ҮНЭ
+-- Онцгой дүрэм 2: Үнэ өнгө ба огнооноос хамаарна
+CREATE TABLE nooluur_une (
+    une_id SERIAL PRIMARY KEY,
+    ongots VARCHAR(20) NOT NULL CHECK (ongots IN ('Цагаан', 'Бор', 'Саарал', 'Хөх')),
+    ekhlekh_ognoo DATE NOT NULL,
+    duusakh_ognoo DATE NOT NULL,
+    negj_une NUMERIC(10, 2) NOT NULL CHECK (negj_une > 0),
+    CONSTRAINT chk_ognoo CHECK (duusakh_ognoo >= ekhlekh_ognoo),
+    CONSTRAINT uq_ongots_ognoo UNIQUE (ongots, ekhlekh_ognoo, duusakh_ognoo)
+);
+
+-- 9. НООЛУУРЫН БОРЛУУЛАЛТ
+CREATE TABLE nooluur_borluulalt (
+    borluulalt_id SERIAL PRIMARY KEY,
+    orkh_id INT NOT NULL REFERENCES orkh(orkh_id) ON DELETE RESTRICT,
+    avagch_id INT NOT NULL REFERENCES khudaldan_avagch(avagch_id) ON DELETE RESTRICT,
+    ognoo DATE NOT NULL DEFAULT CURRENT_DATE,
+    niit_dun NUMERIC(14, 2) NOT NULL DEFAULT 0 CHECK (niit_dun >= 0)
+);
+
+-- 10. БОРЛУУЛАЛТЫН МӨР (Weak Entity: nooluur_borluulalt-аас хамааралтай)
+CREATE TABLE borluulalt_mor (
+    borluulalt_id INT NOT NULL REFERENCES nooluur_borluulalt(borluulalt_id) ON DELETE CASCADE,
+    mor_dugaar INT NOT NULL CHECK (mor_dugaar > 0),
+    ongots VARCHAR(20) NOT NULL CHECK (ongots IN ('Цагаан', 'Бор', 'Саарал', 'Хөх')),
+    jin_kg NUMERIC(10, 2) NOT NULL CHECK (jin_kg > 0),
+    negj_une NUMERIC(10, 2) NOT NULL CHECK (negj_une > 0),
+    mor_dun NUMERIC(14, 2) GENERATED ALWAYS AS (jin_kg * negj_une) STORED,
+    PRIMARY KEY (borluulalt_id, mor_dugaar)
+);
